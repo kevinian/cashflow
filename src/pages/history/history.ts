@@ -46,28 +46,28 @@ export class HistoryPage {
         this.transactions.push.apply(this.transactions, transactions);
         this.skip = this.transactions.length;
         // required for test
-        if (this.transactions.length === 0) {
-          this.transactionService.ensureIndexes().then(() => {
-            let promises = [];
-            for (let i=0;i<50;i++) {
-              promises[i] = this.transactionService.replaceOrCreate({
-                title: '标题 ' + i,
-                date: new Date().toISOString().slice(0, 10),
-                category: '分类 ' + i,
-                amount: i,
-                description: '描述 ' + i
-              });
-            }
-            Promise.all(promises).then(() => {
-              this.transactionService.retrieve(this.limit, this.skip)
-                .then(transactions => {
-                  this.transactions.push.apply(this.transactions, transactions);
-                  this.skip = this.transactions.length;
-                })
-                .catch(console.error.bind(console));
-            });
-          });
-        }
+        // if (this.transactions.length === 0) {
+        //   this.transactionService.ensureIndexes().then(() => {
+        //     let promises = [];
+        //     for (let i=0;i<50;i++) {
+        //       promises[i] = this.transactionService.replaceOrCreate({
+        //         title: '标题 ' + i,
+        //         date: new Date().toISOString().slice(0, 10),
+        //         category: '分类 ' + i,
+        //         amount: i,
+        //         description: '描述 ' + i
+        //       });
+        //     }
+        //     Promise.all(promises).then(() => {
+        //       this.transactionService.retrieve(this.limit, this.skip)
+        //         .then(transactions => {
+        //           this.transactions.push.apply(this.transactions, transactions);
+        //           this.skip = this.transactions.length;
+        //         })
+        //         .catch(console.error.bind(console));
+        //     });
+        //   });
+        // }
       })
       .catch(console.error.bind(console));
   }
