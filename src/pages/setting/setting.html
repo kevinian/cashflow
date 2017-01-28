@@ -1,0 +1,77 @@
+<ion-header>
+  <ion-navbar>
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+    <ion-title>设置</ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding>
+  <ion-item-group>
+    <ion-item-divider color="light">
+      云同步
+      <ion-icon item-right name="cloud-outline"></ion-icon>
+    </ion-item-divider>
+    <ion-item>
+      与远程数据库或者云端数据同步互相之间数据
+      <button ion-button item-right icon-left>
+        <ion-icon name="sync"></ion-icon>
+        数据库同步
+      </button>
+    </ion-item>
+  </ion-item-group>
+  <ion-item-group>
+    <ion-item-divider color="light">
+      分类
+      <ion-icon item-right name="list"></ion-icon>
+    </ion-item-divider>
+    <ion-item>
+      添加一个新的分类
+      <button ion-button item-right icon-left (click)="presentAddNewCategory()">
+        <ion-icon name="add"></ion-icon>
+        新增
+      </button>
+    </ion-item>
+    <ion-item>
+      删除一个或者多个已创建的分类
+      <button ion-button item-right icon-left (click)="presentDeleteCategories()">
+        <ion-icon name="remove"></ion-icon>
+        删除
+      </button>
+    </ion-item>
+  </ion-item-group>
+  <ion-item-group>
+    <ion-item-divider color="light">
+      循环任务
+      <ion-icon item-right name="calendar"></ion-icon>
+    </ion-item-divider>
+    <ion-item>
+      删除已创建的循环任务
+      <button ion-button item-right icon-left (click)="presentDeleteCrons()">
+        <ion-icon name="remove"></ion-icon>
+        删除
+      </button>
+    </ion-item>
+  </ion-item-group>
+  <ion-item-group>
+    <ion-item-divider color="light">
+      提醒
+      <ion-icon item-right name="alarm"></ion-icon>
+    </ion-item-divider>
+    <ion-item>
+      设定新的提醒
+      <button ion-button item-right icon-left>
+        <ion-icon name="add"></ion-icon>
+        新增
+      </button>
+    </ion-item>
+    <ion-item>
+      取消已设定的提醒
+      <button ion-button item-right icon-left>
+        <ion-icon name="remove"></ion-icon>
+        删除
+      </button>
+    </ion-item>
+  </ion-item-group>
+</ion-content>

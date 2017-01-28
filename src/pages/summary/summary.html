@@ -1,0 +1,66 @@
+<ion-header>
+  <ion-navbar>
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+    <ion-title scroll-to-top (doubleTapped)='scrollToTop()'>总结</ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding>
+  <ion-grid>
+    <ion-row wrap responsive-sm>
+      <ion-col>
+        <ion-list class="summary">
+          <ion-item-divider color="light">
+            上月
+          </ion-item-divider>
+      
+          <ion-item>
+            <ion-avatar item-left>
+              <img src="assets/img/right_arrow.png">
+            </ion-avatar>
+            <h3>总支出</h3>
+            <p>{{thisMonthTotalExpense}} 元</p>
+          </ion-item>
+      
+          <ion-item>
+            <ion-avatar item-left>
+              <img src="assets/img/left_arrow.png">
+            </ion-avatar>
+            <h3>总收入</h3>
+            <p>{{thisMonthTotalIncome}} 元</p>
+          </ion-item>
+        </ion-list>
+      
+        <ion-list>
+          <ion-item-divider color="light">
+            本月
+          </ion-item-divider>
+      
+          <ion-item>
+            <ion-avatar item-left>
+              <img src="assets/img/right_arrow.png">
+            </ion-avatar>
+            <h3>总支出</h3>
+            <p>{{lastMonthTotalExpense}} 元</p>
+          </ion-item>
+      
+          <ion-item>
+            <ion-avatar item-left>
+              <img src="assets/img/left_arrow.png">
+            </ion-avatar>
+            <h3>总收入</h3>
+            <p>{{lastMonthTotalIncome}} 元</p>
+          </ion-item>
+      
+        </ion-list>
+        <button ion-button full large (click)="presentModal()">
+          <ion-icon name="md-create"></ion-icon>
+          记一笔
+        </button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+  
+</ion-content>

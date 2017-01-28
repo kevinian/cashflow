@@ -1,0 +1,4 @@
+<ion-list>
+  <ion-list-header>更多</ion-list-header>
+  <button ion-item *ngFor="let chart of charts" (click)="select(chart.id)" [disabled]="chart.isSelected">{{chart.label}}</button>
+</ion-list>

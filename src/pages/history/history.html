@@ -1,0 +1,108 @@
+<ion-header>
+  <ion-navbar>
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+    <ion-title scroll-to-top (doubleTapped)='scrollToTop()'>帐目</ion-title>
+    <ion-buttons end>
+      <ion-searchbar animated="true" placeholder="搜索" debounce=500 [(ngModel)]="searchTerm" (ionInput)="search()"></ion-searchbar>
+    </ion-buttons>
+    <ion-buttons right>
+      <button ion-button (click)="toggleToolbar()">
+        <ion-icon name="options"></ion-icon>
+      </button>
+    </ion-buttons>
+  </ion-navbar>
+  <ion-toolbar *ngIf="showToolbar">
+    <ion-grid>
+      <ion-row>
+        <ion-item>
+          <ion-label fixed>起始日期</ion-label>
+          <ion-datetime cancelText="取消" doneText="确认" displayFormat="MMM DD, YYYY" [(ngModel)]="startDate"></ion-datetime>
+        </ion-item>
+      </ion-row>
+      <ion-row>
+        <ion-item>
+          <ion-label fixed>截止日期</ion-label>
+          <ion-datetime cancelText="取消" doneText="确认" displayFormat="MMM DD, YYYY" [(ngModel)]="endDate"></ion-datetime>
+        </ion-item>
+      </ion-row>
+      <ion-row>
+        <ion-col width-50>
+          <ion-item>
+            <ion-label fixed>最低</ion-label>
+            <ion-input type="number" [(ngModel)]="minAmount" (ngModelChange)="minAmount=convertToNumber(minAmount)"></ion-input>
+          </ion-item>
+        </ion-col>
+        <ion-col width-50>
+          <ion-item>
+            <ion-label fixed>最高</ion-label>
+            <ion-input type="number" [(ngModel)]="maxAmount" (ngModelChange)="maxAmount=convertToNumber(maxAmount)"></ion-input>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-item>
+          <ion-label>分类</ion-label>
+          <ion-select cancelText="取消" okText="确认" [(ngModel)]="category">
+            <ion-option value="" selected="true">所有分类</ion-option>
+            <ion-option *ngFor="let category of categories" [value]="category.name">{{category.name}}</ion-option>
+          </ion-select>
+        </ion-item>
+      </ion-row>
+      <ion-row>
+        <ion-col>
+          <ion-buttons right>
+            <button ion-button outline icon-right (click)="resetFilter()">
+              重置
+              <ion-icon name="close"></ion-icon>
+            </button>
+            <button ion-button outline icon-right (click)="applyFilter()">
+              筛选
+              <ion-icon name="funnel"></ion-icon>
+            </button>
+          </ion-buttons>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content padding>
+  <ion-refresher (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content
+      pullingIcon="arrow-dropdown"
+      pullingText="下拉刷新"
+      refreshingSpinner="ios"
+      refreshingText="刷新...">
+    </ion-refresher-content>
+  </ion-refresher>
+  <ion-list>
+    <ion-item-sliding *ngFor="let transaction of transactions; let i = index">
+      <ion-item>
+        <h2>{{transaction.category}}</h2>
+        <p>{{transaction.title}}</p>
+        <div item-right>
+          <h2 text-right>{{transaction.amount}}</h2>
+          <ion-note>{{transaction.date}}</ion-note>
+        </div>
+      </ion-item>
+      <ion-item-options side="right">
+        <button ion-button (click)="edit(i)">
+          <ion-icon name="open"></ion-icon>
+          修改
+        </button>
+        <button ion-button (click)="remove(i)">
+          <ion-icon name="trash"></ion-icon>
+          删除
+        </button>
+      </ion-item-options>
+    </ion-item-sliding>
+  </ion-list>
+  <ion-infinite-scroll (ionInfinite)="doInfinite($event)">
+    <ion-infinite-scroll-content
+      loadingSpinner="ios"
+      loadingText="加载更多...">
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>
