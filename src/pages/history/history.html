@@ -17,6 +17,26 @@
     <ion-grid>
       <ion-row>
         <ion-item>
+          <ion-label>排序方式</ion-label>
+          <ion-select cancelText="取消" okText="确认" [(ngModel)]="sort">
+            <ion-option value="date">消费日期</ion-option>
+            <ion-option value="title">标题描述</ion-option>
+            <ion-option value="category">性质分类</ion-option>
+            <ion-option value="amount">金额</ion-option>
+          </ion-select>
+        </ion-item>
+      </ion-row>
+      <ion-row>
+        <ion-item>
+          <ion-label>分类</ion-label>
+          <ion-select cancelText="取消" okText="确认" [(ngModel)]="category">
+            <ion-option value="" selected="true">所有分类</ion-option>
+            <ion-option *ngFor="let category of categories" [value]="category.name">{{category.name}}</ion-option>
+          </ion-select>
+        </ion-item>
+      </ion-row>
+      <ion-row>
+        <ion-item>
           <ion-label fixed>起始日期</ion-label>
           <ion-datetime cancelText="取消" doneText="确认" displayFormat="MMM DD, YYYY" [(ngModel)]="startDate"></ion-datetime>
         </ion-item>
@@ -31,24 +51,15 @@
         <ion-col width-50>
           <ion-item>
             <ion-label fixed>最低</ion-label>
-            <ion-input type="number" [(ngModel)]="minAmount" (ngModelChange)="minAmount=convertToNumber(minAmount)"></ion-input>
+            <ion-input type="number" step="0.01" min="0" [(ngModel)]="minAmount" (ngModelChange)="minAmount=convertToNumber(minAmount)"></ion-input>
           </ion-item>
         </ion-col>
         <ion-col width-50>
           <ion-item>
             <ion-label fixed>最高</ion-label>
-            <ion-input type="number" [(ngModel)]="maxAmount" (ngModelChange)="maxAmount=convertToNumber(maxAmount)"></ion-input>
+            <ion-input type="number" step="0.01" min="0" [(ngModel)]="maxAmount" (ngModelChange)="maxAmount=convertToNumber(maxAmount)"></ion-input>
           </ion-item>
         </ion-col>
-      </ion-row>
-      <ion-row>
-        <ion-item>
-          <ion-label>分类</ion-label>
-          <ion-select cancelText="取消" okText="确认" [(ngModel)]="category">
-            <ion-option value="" selected="true">所有分类</ion-option>
-            <ion-option *ngFor="let category of categories" [value]="category.name">{{category.name}}</ion-option>
-          </ion-select>
-        </ion-item>
       </ion-row>
       <ion-row>
         <ion-col>
@@ -83,7 +94,8 @@
         <h2>{{transaction.category}}</h2>
         <p>{{transaction.title}}</p>
         <div item-right>
-          <h2 text-right>{{transaction.amount}}</h2>
+          <h2 text-right *ngIf="transaction.type === 'income'">{{transaction.amount}} +</h2>
+          <h2 text-right *ngIf="transaction.type === 'expense'">{{transaction.amount}} -</h2>
           <ion-note>{{transaction.date}}</ion-note>
         </div>
       </ion-item>

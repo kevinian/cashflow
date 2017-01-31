@@ -39,7 +39,9 @@
           </div>
         
           <ion-card-content>
-            <p></p>
+            <p>
+              {{lineChartLabel}}里，开销最大的是月。总共消费了：欧元
+            </p>
           </ion-card-content>
         
         </ion-card>
@@ -48,29 +50,34 @@
         <ion-card>
           <ion-card-header>
             <ion-item>
-              收支平衡
-              <button ion-button icon-only item-right clear>
+              收支平衡： {{barChartLabel}}
+              <button ion-button icon-only item-right clear (click)="buildBarChart()">
                 <ion-icon name="refresh"></ion-icon>
               </button>
-              <button ion-button icon-only item-right clear>
+              <button ion-button icon-only item-right clear (click)="presentBarChartOptions($event)">
                 <ion-icon name="more"></ion-icon>
               </button>
             </ion-item>
           </ion-card-header>
 
-          <div class="chart" style="display: block;">
+          <div class="spinner" [hidden]="!isBarChartLoading">
+            <ion-spinner name="ios"></ion-spinner>
+          </div>
+          <div class="chart" style="display: block;" [hidden]="isBarChartLoading">
             <canvas baseChart
               [datasets]="barChartData"
               [labels]="barChartLabels"
               [options]="barChartOptions"
-              [legend]=false
+              [legend]=true
               [chartType]="barChartType"
               (chartHover)="chartHovered($event)"
               (chartClick)="chartClicked($event)"></canvas>
           </div>
         
           <ion-card-content>
-            <p></p>
+            <p>
+              {{barChartLabel}}里，
+            </p>
           </ion-card-content>
         
         </ion-card>
@@ -103,7 +110,9 @@
           </div>
         
           <ion-card-content>
-            <p></p>
+            <p>
+              {{pieChartLabel}}消费占比最高的为：
+            </p>
           </ion-card-content>
 
         </ion-card>

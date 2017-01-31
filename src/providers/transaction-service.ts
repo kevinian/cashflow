@@ -23,6 +23,8 @@ export class TransactionService extends DataService {
   
   retrieve(limit?, skip?, query?: { startDate?: string, endDate?: string, minAmount?: number, maxAmount?: number, category?: string }, sort?: string) {
     let selector = { $and: [] };
+    selector['$and'].push({ _id: { $gte: `${this._collection}_` } });
+    selector['$and'].push({ _id: { $lte: `${this._collection}_\uffff` } });
     if (query) {
       if (query.startDate) {
         selector['$and'].push({ 
@@ -44,7 +46,6 @@ export class TransactionService extends DataService {
           amount: {'$lte': query.maxAmount} 
         });
       }
-      // TODO: categories
       if (query.category) {
         selector['$and'].push({ 
           category: query.category
@@ -52,11 +53,9 @@ export class TransactionService extends DataService {
       }
     }
     if (selector['$and'].length > 0) {
-      console.log('retrieve', limit, skip, selector);
       return this.ensureIndexes().then(() => {
         let options: any = {
-          selector: selector,
-          sort: sort
+          selector: selector
         };
         if (limit) {
           options.limit = limit;
@@ -64,9 +63,13 @@ export class TransactionService extends DataService {
         if (skip) {
           options.skip = skip;
         }
+        if (sort) {
+          options.sort = [sort];
+        }
         return this._db
           .find(options)
           .then((result) => {
+            // console.log('retrieve', limit, skip, selector, result);
             return result.docs;
           });
       });
@@ -76,16 +79,23 @@ export class TransactionService extends DataService {
   }
   
   search(term?: string) {
+    // Sort option is impossible here, use default sort by _id
     return this.ensureIndexes().then(() => {
       let options: any = {
         selector: {
-          _id: {$gte: null},
-          $or: [{
-            title: {$regex: '^.*' + term + '.*$'}
-          }, {
-            category: {$regex: '^.*' + term + '.*$'}
-          }]
-        }
+          $and: [
+            { _id: { $gte: `${this._collection}_` } },
+            { _id: { $lte: `${this._collection}_\uffff` } },
+            {
+              $or: [{
+                title: {$regex: '^.*' + term + '.*$'}
+              }, {
+                category: {$regex: '^.*' + term + '.*$'}
+              }]
+            }
+          ]
+        },
+        limit: 100
       };
       return this._db
         .find(options)

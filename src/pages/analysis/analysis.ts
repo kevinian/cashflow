@@ -58,8 +58,30 @@ export class AnalysisPage {
     responsive: true,
     maintainAspectRatio: false
   };
-  private pieChartLabels: any[] = [];
-  private pieChartData: any[] = [];
+  private pieChartLabels: Array<any> = [];
+  private pieChartData: Array<any> = [];
+  private isBarChartLoading: boolean = false;
+  private barCharts: Array<any> = [{
+    id: 1,
+    label: '近三月',
+    isSelected: true
+  }, {
+    id: 2,
+    label: '近六月',
+    isSelected: false
+  }];
+  private barChartLabel: string;
+  private barChartType: string = 'bar';
+  private barChartOptions: any = {
+    scaleShowVerticalLines: false,
+    responsive: true,
+    maintainAspectRatio: false
+  };
+  private barChartLabels: Array<any> = [];
+  private barChartData: Array<any> = [
+    {data: []},
+    {data: []}
+  ];
 
   constructor(private popoverCtrl: PopoverController, private transactionService: TransactionService) {
 
@@ -67,6 +89,7 @@ export class AnalysisPage {
   
   ionViewDidLoad() {
     this.buildLineChart();
+    this.buildBarChart();
     this.buildPieChart();
   }
   
@@ -76,6 +99,57 @@ export class AnalysisPage {
   
   getSelectedChart(charts) {
     return charts.find(chart => chart.isSelected);
+  }
+  
+  sumByMonth(startDate, endDate) {
+    return this.transactionService.retrieve(undefined, 0, {
+      startDate: startDate,
+      endDate: endDate
+    })
+      .then((transactions) => {
+        return _.chain(transactions)
+          .map((transaction) => {
+            transaction.date = moment(transaction.date).format('MMM');
+            return transaction;
+          })
+          .groupBy('date')
+          .map((group) => {
+            // Workaround for typescript compile error
+            let partitions = _.partition(group, transaction => transaction['type'] === 'income');
+            return {
+              month: group[0].date,
+              sum: {
+                income: _.sumBy(partitions[0], 'amount'),
+                expense: _.sumBy(partitions[1], 'amount')
+              } 
+            };
+          })
+          .value();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+  
+  sumByCategory(startDate, endDate) {
+    return this.transactionService.retrieve(undefined, 0, {
+      startDate: startDate,
+      endDate: endDate
+    })
+      .then((transactions) => {
+        return _.chain(transactions)
+         .groupBy('category')
+         .map((group) => {
+           return {
+             category: group[0].category,
+             sum: _.sumBy(group, 'amount')
+           };
+         })
+         .value();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
   
   presentLineChartOptions(event) {
@@ -92,32 +166,7 @@ export class AnalysisPage {
     });
     popover.present({ ev: event });
   }
-  
-  getLineChartDataSet(startDate, endDate) {
-    return this.transactionService.retrieve(undefined, 0, {
-      startDate: startDate,
-      endDate: endDate
-    })
-      .then((transactions) => {
-        return _.chain(transactions)
-          .map((transaction) => {
-            transaction.date = moment(transaction.date).format('MMM');
-            return transaction;
-          })
-          .groupBy('date')
-          .map((group) => {
-            return {
-              month: group[0].date,
-              sum: _.sumBy(group, 'amount')
-            };
-          })
-          .value();
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }
-  
+
   buildLineChart() {
     this.isLineChartLoading = true;
     let currentChart = this.getSelectedChart(this.lineCharts);
@@ -131,7 +180,7 @@ export class AnalysisPage {
     }
     endDate = moment().endOf('month').format('YYYY-MM-DD');
     if (startDate && endDate) {
-      this.getLineChartDataSet(startDate, endDate).then((dataSet) => {
+      this.sumByMonth(startDate, endDate).then((dataSet) => {
         // Use timeout because of user experience
         // chart.js draw graph much more faster if no data exists
         let timeout = this.lineChartLabels.length === 0 ? 50 : 0;
@@ -139,8 +188,7 @@ export class AnalysisPage {
         setTimeout(() => {
           this.lineChartLabels = _.map(dataSet, 'month');
           this.lineChartData = [{
-            data: _.map(dataSet, 'sum'),
-            label: '上三个月'
+            data: _.map(dataSet, 'sum.expense')
           }];
         }, timeout);
       });
@@ -162,27 +210,6 @@ export class AnalysisPage {
     popover.present({ ev: event });
   }
   
-  getPieChartDataSet(startDate, endDate) {
-    return this.transactionService.retrieve(undefined, 0, {
-      startDate: startDate,
-      endDate: endDate
-    })
-      .then((transactions) => {
-        return _.chain(transactions)
-         .groupBy('category')
-         .map((group) => {
-           return {
-             category: group[0].category,
-             sum: _.sumBy(group, 'amount')
-           };
-         })
-         .value();
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }
-  
   buildPieChart() {
     this.isPieChartLoading = true;
     let currentChart = this.getSelectedChart(this.pieCharts);
@@ -197,7 +224,7 @@ export class AnalysisPage {
       endDate = moment().subtract(1, 'months').endOf('month').format('YYYY-MM-DD');
     }
     if (startDate && endDate) {
-      this.getPieChartDataSet(startDate, endDate).then((dataSet) => {
+      this.sumByCategory(startDate, endDate).then((dataSet) => {
         let timeout = this.pieChartLabels.length === 0 ? 50 : 0;
         this.isPieChartLoading = false;
         setTimeout(() => {
@@ -207,28 +234,60 @@ export class AnalysisPage {
       });
     }
   }
-  
-  // Bar Chart
-  public barChartOptions:any = {
-    scaleShowVerticalLines: false,
-    responsive: true,
-    maintainAspectRatio: false
-  };
-  public barChartLabels:string[] = ['2006', '2007', '2008', '2009', '2010', '2011', '2012'];
-  public barChartType:string = 'bar';
-  public barChartLegend:boolean = true;
 
-  public barChartData:any[] = [
-    {data: [65, 59, 80, 81, 56, 55, 40], label: 'Series A'},
-    {data: [28, 48, 40, 19, 86, 27, 90], label: 'Series B'}
-  ];
+  presentBarChartOptions() {
+    let popover = this.popoverCtrl.create(PopoverPage, {charts: this.barCharts});
+    popover.onDidDismiss((changed) => {
+      if (changed) {
+        let currentChart = this.getSelectedChart(this.barCharts);
+        let changedChart = this.getSelectedChart(changed);
+        if (currentChart.id !== changedChart.id) {
+          this.barCharts = changed;
+          this.buildBarChart();
+        }
+      }
+    });
+    popover.present({ ev: event });
+  }
   
-  // events
-  public chartClicked(e:any):void {
+  buildBarChart() {
+    this.isBarChartLoading = true;
+    let currentChart = this.getSelectedChart(this.barCharts);
+    this.barChartLabel = currentChart.label;
+    let startDate;
+    let endDate;
+    if (currentChart.id === 1) {
+      startDate = moment().subtract(2, 'months').startOf('month').format('YYYY-MM-DD');
+    } else if (currentChart.id === 2) {
+      startDate = moment().subtract(5, 'months').startOf('month').format('YYYY-MM-DD');
+    }
+    endDate = moment().endOf('month').format('YYYY-MM-DD');
+    if (startDate && endDate) {
+      this.sumByMonth(startDate, endDate).then((dataSet) => {
+        // Use timeout because of user experience
+        // chart.js draw graph much more faster if no data exists
+        let timeout = this.barChartLabels.length === 0 ? 50 : 0;
+        this.isBarChartLoading = false;
+        setTimeout(() => {
+          this.barChartLabels = _.map(dataSet, 'month');
+          this.barChartData = [{
+            data: _.map(dataSet, 'sum.expense'),
+            label: '支出'
+          }, {
+            data: _.map(dataSet, 'sum.income'),
+            label: '收入'
+          }];
+        }, timeout);
+      });
+    }
+  }
+
+  // Events
+  private chartClicked(e: any):void {
     // console.log(e);
   }
 
-  public chartHovered(e:any):void {
+  private chartHovered(e: any):void {
     // console.log(e);
   }
 

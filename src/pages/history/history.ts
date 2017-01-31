@@ -1,6 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
-import { Platform, Content, ModalController, LoadingController, ToastController, List } from 'ionic-angular';
-import * as later from 'later';
+import { Platform, Content, ModalController, LoadingController, ToastController, NavParams, List } from 'ionic-angular';
 
 import { DetailPage } from '../detail/detail';
 import { TransactionService } from '../../providers/transaction-service';
@@ -14,11 +13,13 @@ import { CronService } from '../../providers/cron-service';
 export class HistoryPage {
   @ViewChild(Content) content: Content;
   @ViewChild(List) list: List;
+  private events: any;
   private transactions = [];
   private categories = [];
   public crons = [];
   private limit: number = 10;
   private skip: number = 0;
+  private sort: string = 'date';
   private searchTerm: string = '';
   // Default filter
   private startDate: string;
@@ -34,40 +35,21 @@ export class HistoryPage {
     private modalCtrl: ModalController,
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController,
+    private navParams: NavParams,
     private transactionService: TransactionService,
     private categoryService: CategoryService,
     private cronService: CronService) {
+      this.events = navParams.data.events;
   }
   
   ionViewDidLoad() {
+    this.events.subscribe('refreshHistoryTab', () => {
+      this.reset();
+    });
     this.transactionService.retrieve(this.limit, this.skip)
       .then((transactions) => {
-        // console.log('history list', transactions);
         this.transactions.push.apply(this.transactions, transactions);
         this.skip = this.transactions.length;
-        // required for test
-        // if (this.transactions.length === 0) {
-        //   this.transactionService.ensureIndexes().then(() => {
-        //     let promises = [];
-        //     for (let i=0;i<50;i++) {
-        //       promises[i] = this.transactionService.replaceOrCreate({
-        //         title: '标题 ' + i,
-        //         date: new Date().toISOString().slice(0, 10),
-        //         category: '分类 ' + i,
-        //         amount: i,
-        //         description: '描述 ' + i
-        //       });
-        //     }
-        //     Promise.all(promises).then(() => {
-        //       this.transactionService.retrieve(this.limit, this.skip)
-        //         .then(transactions => {
-        //           this.transactions.push.apply(this.transactions, transactions);
-        //           this.skip = this.transactions.length;
-        //         })
-        //         .catch(console.error.bind(console));
-        //     });
-        //   });
-        // }
       })
       .catch(console.error.bind(console));
   }
@@ -88,6 +70,24 @@ export class HistoryPage {
         this.content.resize();
       })
       .catch(console.error.bind(console));
+  }
+  
+  reset() {
+    this.startDate = undefined;
+    this.endDate = undefined;
+    this.minAmount = undefined;
+    this.maxAmount = undefined;
+    this.category = '';
+    this.sort = 'date';
+    this.skip = 0;
+    this.transactionService.retrieve(this.limit, this.skip)
+      .then(transactions => {
+        this.transactions = []; // Clear stale
+        this.transactions.push.apply(this.transactions, transactions);
+        this.skip = this.transactions.length;
+      })
+      .catch(console.error.bind(console));
+    this.searchTerm = '';
   }
   
   applyFilter() {
@@ -127,6 +127,7 @@ export class HistoryPage {
     this.minAmount = undefined;
     this.maxAmount = undefined;
     this.category = '';
+    this.sort = 'date';
     this.skip = 0;
     this.transactionService.retrieve(this.limit, this.skip)
       .then(transactions => {
@@ -146,6 +147,7 @@ export class HistoryPage {
     modal.onDidDismiss((transaction) => {
       if (transaction) {
         this.transactions[index] = transaction;
+        this.events.publish('refreshSummaryTab');
       }
     });
     modal.present();
@@ -158,10 +160,11 @@ export class HistoryPage {
     this.transactionService.remove(transaction).then(() => {
       let toast = this.toastCtrl.create({
         message: '已删除',
-        duration: 2000
+        duration: 1000
       });
       toast.present();
       this.transactions.splice(index, 1);
+      this.events.publish('refreshSummaryTab');
     })
     .catch((err) => {
       console.log('remove error', err);
@@ -174,66 +177,26 @@ export class HistoryPage {
     });
   }
   
-  getOccurences(sched, ...args) {
-    let occurrences = sched.next(...args);
-    if (typeof occurrences === 'number') { // no occurrences, result is 0
-      return [];
-    }
-    if (typeof occurrences === 'date') { // only one occurrences, result is date
-      return [occurrences];
-    }
-    // more occurrences, result is array
-    return occurrences;
-  }
-  
   doRefresh(refresher) {
-    // Retrieve all cron jobs
-    this.cronService.retrieve()
-      .then((crons) => {
-        let bulk = [];
-        crons = crons.map((cron) => {
-          let sched = later.schedule(later.parse.cron(cron.fireInterval));
-          let startDate = new Date(cron.fireAt);
-          let endDate = new Date();
-          let transactions = [];
-          // Retrieve all occurrences
-          do {
-            let occurrences = this.getOccurences(sched, 5, startDate, endDate);
-            transactions = occurrences.map((date) => {
-              let transaction = Object.assign({}, cron.transaction);
-              transaction.date = date.toISOString().slice(0, 10);
-              return transaction;
-            });
-            if (occurrences.length > 0) {
-              bulk.push.apply(bulk, transactions);
-              startDate = this.getOccurences(sched, 2, occurrences.pop())[1];
-            }
-          } while (transactions.length === 5);
-          cron.fireAt = startDate.toISOString().slice(0, 10);
-          return cron;
-        });
-        this.transactionService.bulkReplaceOrCreate(bulk)
-          .then(() => {
-            // Retrieve all transactions
-            this.skip = 0;
-            this.transactionService.retrieve(this.limit, this.skip)
-              .then(transactions => {
-                this.transactions = []; // Clear stale
-                this.transactions.push.apply(this.transactions, transactions);
-                this.skip = this.transactions.length;
-                refresher.complete();
-              })
-              .catch(console.error.bind(console));
-          })
-          .catch(console.error.bind(console));
-        console.log('update crons', crons);
-        // Update all cron jobs
-        if (bulk.length > 0) {
-          this.cronService.bulkReplaceOrCreate(crons);
-        }
-      })
-      .catch(console.error.bind(console));
     this.searchTerm = '';
+    let job = (bulk) => {
+      return this.transactionService.bulkReplaceOrCreate(bulk);
+    };
+    this.cronService.runJobForAllCrons(job).then((bulk) =>{
+      // Retrieve all transactions
+      this.skip = 0;
+      this.transactionService.retrieve(this.limit, this.skip)
+        .then(transactions => {
+          this.transactions = []; // Clear stale
+          this.transactions.push.apply(this.transactions, transactions);
+          this.skip = this.transactions.length;
+          refresher.complete();
+        })
+        .catch(console.error.bind(console));
+      if (bulk.length > 0) {
+        this.events.publish('refreshSummaryTab');
+      }
+    });
   }
   
   doInfinite(infiniteScroll) {

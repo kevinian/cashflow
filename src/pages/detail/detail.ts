@@ -3,6 +3,7 @@ import { ViewController, NavParams, ToastController } from 'ionic-angular';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import * as math from 'mathjs';
 import * as later from 'later';
+import * as moment from 'moment';
 
 import { TransactionService } from '../../providers/transaction-service';
 import { CategoryService } from '../../providers/category-service';
@@ -19,7 +20,6 @@ import { CronService } from '../../providers/cron-service';
   templateUrl: 'detail.html'
 })
 export class DetailPage {
-  public originalTransaction: any = {};
   private transaction: any = {};
   private categories = [];
   private detailForm: FormGroup;
@@ -29,6 +29,7 @@ export class DetailPage {
   private newCategory: string = '';
   private expression: string = '';
   private scheduler: string = 'never';
+  private showScheduler: boolean = true;
 
   constructor(private viewCtrl: ViewController,
     private navParams: NavParams,
@@ -50,16 +51,16 @@ export class DetailPage {
     let editTransaction = this.navParams.get('transaction');
     if (editTransaction) {
       this.transaction = Object.assign({}, editTransaction);
-      this.originalTransaction = editTransaction;
+      this.type = this.transaction.type;
+      this.showScheduler = false;
     } else {
       this.transaction = {
         title: '',
-        date: new Date().toISOString().slice(0, 10),
+        date: moment().format('YYYY-MM-DD'),
         category: '',
         amount: undefined,
         description: ''
       };
-      this.originalTransaction = this.transaction;
     }
     this.categoryService.retrieve()
       .then(categories => {
@@ -84,7 +85,7 @@ export class DetailPage {
     this.categoryService.replaceOrCreate(category).then(() => {
       let toast = this.toastCtrl.create({
         message: '已添加',
-        duration: 2000
+        duration: 1000
       });
       toast.present();
       this.newCategory = '';
@@ -145,52 +146,60 @@ export class DetailPage {
   }
   
   save() {
-    this.transaction.date = this.transaction.date.slice(0, 10);
+    this.transaction.type = this.type;
+    this.transaction.date = moment(this.transaction.date).format('YYYY-MM-DD');
     if (this.scheduler === 'never') {
       this.transactionService.replaceOrCreate(this.transaction).then((result) => {
         this.transaction._rev = result.rev;
+        this.viewCtrl.dismiss(this.transaction);
         let toast = this.toastCtrl.create({
           message: '已保存',
-          duration: 2000
+          duration: 1000
         });
         toast.present();
       })
       .catch((err) => {
         let toast = this.toastCtrl.create({
-          message: '保存失败，请刷新后重试！',
+          message: '保存失败！',
           showCloseButton: true,
           closeButtonText: '确定？'
         });
         toast.present();
       });
     } else {
-      // add cron job
+      // Add cron job
       let cron = {
         fireInterval: this.getFireInterval(),
         fireAt: this.transaction.date,
         transaction: this.transaction
       };
       this.cronService.replaceOrCreate(cron).then((result) => {
-        let toast = this.toastCtrl.create({
-          message: '已保存',
-          duration: 2000
+        cron['_rev'] = result.rev;
+        let job = (bulk) => {
+          return this.transactionService.bulkReplaceOrCreate(bulk);
+        };
+        this.cronService.runJobForCron(job, cron).then((bulk) => {
+          this.viewCtrl.dismiss(this.transaction);
+          let toast = this.toastCtrl.create({
+            message: '已保存',
+            duration: 1000
+          });
+          toast.present();
         });
-        toast.present();
       })
       .catch((err) => {
         let toast = this.toastCtrl.create({
-          message: '保存失败，请刷新后重试！',
+          message: '保存失败！',
           showCloseButton: true,
           closeButtonText: '确定？'
         });
         toast.present();
       });
     }
-    this.viewCtrl.dismiss(this.transaction);
   }
   
   cancel() {
-    this.viewCtrl.dismiss(this.originalTransaction);
+    this.viewCtrl.dismiss();
   }
   
 }
