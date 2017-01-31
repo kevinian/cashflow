@@ -137,7 +137,7 @@ export class AnalysisPage {
       endDate: endDate
     })
       .then((transactions) => {
-        return _.chain(transactions)
+        return _.chain(transactions.filter(transaction => transaction.type === 'expense'))
          .groupBy('category')
          .map((group) => {
            return {
