@@ -17,17 +17,6 @@
     <ion-grid>
       <ion-row>
         <ion-item>
-          <ion-label>排序方式</ion-label>
-          <ion-select cancelText="取消" okText="确认" [(ngModel)]="sort">
-            <ion-option value="date">消费日期</ion-option>
-            <ion-option value="title">标题描述</ion-option>
-            <ion-option value="category">性质分类</ion-option>
-            <ion-option value="amount">金额</ion-option>
-          </ion-select>
-        </ion-item>
-      </ion-row>
-      <ion-row>
-        <ion-item>
           <ion-label>分类</ion-label>
           <ion-select cancelText="取消" okText="确认" [(ngModel)]="category">
             <ion-option value="" selected="true">所有分类</ion-option>
@@ -58,6 +47,28 @@
           <ion-item>
             <ion-label fixed>最高</ion-label>
             <ion-input type="number" step="0.01" min="0" [(ngModel)]="maxAmount" (ngModelChange)="maxAmount=convertToNumber(maxAmount)"></ion-input>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col width-50>
+          <ion-item>
+            <ion-label>排序方式</ion-label>
+            <ion-select cancelText="取消" okText="确认" [(ngModel)]="sortProperty">
+              <ion-option value="date">消费日期</ion-option>
+              <ion-option value="title">标题描述</ion-option>
+              <ion-option value="category">性质分类</ion-option>
+              <ion-option value="amount">金额</ion-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+        <ion-col width-50>
+          <ion-item>
+            <ion-label>排序方向</ion-label>
+            <ion-select cancelText="取消" okText="确认" [(ngModel)]="sortDirection">
+              <ion-option value="asc">升序</ion-option>
+              <ion-option value="desc">降序</ion-option>
+            </ion-select>
           </ion-item>
         </ion-col>
       </ion-row>

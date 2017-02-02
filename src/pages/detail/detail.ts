@@ -78,28 +78,37 @@ export class DetailPage {
   }
   
   addCategory() {
-    let category = {
-      id: `categories_${this.newCategory}`,
-      name: this.newCategory
-    };
-    this.categoryService.replaceOrCreate(category).then(() => {
-      let toast = this.toastCtrl.create({
-        message: '已添加',
-        duration: 1000
+    if (this.newCategory && this.newCategory !== '') {
+      let category = {
+        id: `categories_${this.newCategory}`,
+        name: this.newCategory
+      };
+      this.categoryService.replaceOrCreate(category).then(() => {
+        let toast = this.toastCtrl.create({
+          message: '已添加',
+          duration: 1000
+        });
+        toast.present();
+        this.newCategory = '';
+        this.toggleCategoryEditor();
+        this.categories.push(category);
+      })
+      .catch((err) => {
+        let toast = this.toastCtrl.create({
+          message: '添加失败，请重试！',
+          showCloseButton: true,
+          closeButtonText: '确定？'
+        });
+        toast.present();
       });
-      toast.present();
-      this.newCategory = '';
-      this.toggleCategoryEditor();
-      this.categories.push(category);
-    })
-    .catch((err) => {
+    } else {
       let toast = this.toastCtrl.create({
-        message: '添加失败，请重试！',
+        message: '添加失败，分类名不许为空！',
         showCloseButton: true,
         closeButtonText: '确定？'
       });
       toast.present();
-    });
+    }
   }
   
   toggleCalculator() {

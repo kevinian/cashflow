@@ -42,6 +42,8 @@ export class AnalysisPage {
   private lineChartData: Array<any> = [
     {data: []}
   ];
+  private lineChartMaxKey: string;
+  private lineChartMaxValue: number;
   private isPieChartLoading = false;
   private pieCharts: Array<any> = [{
     id: 1,
@@ -60,6 +62,8 @@ export class AnalysisPage {
   };
   private pieChartLabels: Array<any> = [];
   private pieChartData: Array<any> = [];
+  private pieChartMaxKey: string;
+  private pieChartMaxValue: number;
   private isBarChartLoading: boolean = false;
   private barCharts: Array<any> = [{
     id: 1,
@@ -82,6 +86,8 @@ export class AnalysisPage {
     {data: []},
     {data: []}
   ];
+  private barChartMaxKey: string;
+  private barChartMaxValue: number;
 
   constructor(private popoverCtrl: PopoverController, private transactionService: TransactionService) {
 
@@ -190,6 +196,11 @@ export class AnalysisPage {
           this.lineChartData = [{
             data: _.map(dataSet, 'sum.expense')
           }];
+          let max = _.maxBy(dataSet, 'sum.expense');
+          if (max) {
+            this.lineChartMaxKey = max.month;
+            this.lineChartMaxValue = max.sum.expense;
+          }
         }, timeout);
       });
     }
@@ -230,6 +241,11 @@ export class AnalysisPage {
         setTimeout(() => {
           this.pieChartLabels = _.map(dataSet, 'category');
           this.pieChartData = _.map(dataSet, 'sum');
+          let max = _.maxBy(dataSet, 'sum');
+          if (max) {
+            this.pieChartMaxKey = max.category;
+            this.pieChartMaxValue = max.sum;
+          }
         }, timeout);
       });
     }
@@ -277,6 +293,13 @@ export class AnalysisPage {
             data: _.map(dataSet, 'sum.income'),
             label: '收入'
           }];
+          let max = _.maxBy(dataSet, ({month, sum}) => {
+            return sum.income - sum.expense;
+          });
+          if (max) {
+            this.barChartMaxKey = max.month;
+            this.barChartMaxValue = max.sum.income - max.sum.expense;
+          }
         }, timeout);
       });
     }

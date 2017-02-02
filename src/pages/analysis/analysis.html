@@ -39,8 +39,8 @@
           </div>
         
           <ion-card-content>
-            <p>
-              {{lineChartLabel}}里，开销最大的是月。总共消费了：欧元
+            <p  *ngIf="lineChartMaxKey && lineChartMaxValue">
+              {{lineChartLabel}}里，开销最大的是{{lineChartMaxKey}}。总共消费了：{{lineChartMaxValue}}欧元。
             </p>
           </ion-card-content>
         
@@ -75,8 +75,8 @@
           </div>
         
           <ion-card-content>
-            <p>
-              {{barChartLabel}}里，
+            <p  *ngIf="barChartMaxKey && barChartMaxValue">
+              {{barChartLabel}}里，收支盈利最大的是{{barChartMaxKey}}。总共盈利了{{barChartMaxValue}}欧元。
             </p>
           </ion-card-content>
         
@@ -110,8 +110,8 @@
           </div>
         
           <ion-card-content>
-            <p>
-              {{pieChartLabel}}消费占比最高的为：
+            <p  *ngIf="pieChartMaxKey && pieChartMaxValue">
+              {{pieChartLabel}}消费占比最高的种类为：{{pieChartMaxKey}}。总共消费了：{{pieChartMaxValue}}欧元。
             </p>
           </ion-card-content>
 

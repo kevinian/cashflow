@@ -33,6 +33,15 @@ export class SettingPage {
       .catch(console.error.bind(console));
   }
   
+  resetDatabase() {
+    this.categoryService.reset();
+    let toast = this.toastCtrl.create({
+      message: '数据库已重置带初始状态',
+      duration: 1000
+    });
+    toast.present();
+  }
+  
   presentAddNewCategory() {
     let alert = this.alertCtrl.create();
     alert.setTitle('添加新分类?');

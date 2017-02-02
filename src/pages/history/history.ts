@@ -17,19 +17,51 @@ export class HistoryPage {
   private transactions = [];
   private categories = [];
   public crons = [];
+  private showToolbar: boolean = false;
+  private showFilter: boolean = false;
+  private searchTerm: string = '';
   private limit: number = 10;
   private skip: number = 0;
-  private sort: string = 'date';
-  private searchTerm: string = '';
-  // Default filter
+  private sortProperty: string = 'date';
+  private sortDirection: string = 'desc';
+  private get sort(){
+    let sort = {};
+    sort[this.sortProperty] = this.sortDirection;
+    return [sort];
+  }
+  private set sort(sort) {
+    if (Array.isArray(sort) && sort.length > 0) {
+      let pair = sort[0];
+      for (let key in pair) {
+        if (pair.hasOwnProperty(key)) {
+          this.sortProperty = key;
+          this.sortDirection = pair[key];
+          return;
+        }
+      }
+    }
+  }
   private startDate: string;
   private endDate: string;
   private minAmount: number;
   private maxAmount: number;
   private category: string = '';
-  
-  private showToolbar: boolean = false;
-  private showFilter: boolean = false;
+  private get selector() {
+    return {
+      startDate: this.startDate,
+      endDate: this.endDate,
+      minAmount: this.minAmount,
+      maxAmount: this.maxAmount,
+      category: this.category
+    };
+  };
+  private set selector(selector: { startDate?: string, endDate?: string, minAmount?: number, maxAmount?: number, category?: string }) {
+    this.startDate = selector.startDate;
+    this.endDate = selector.endDate;
+    this.minAmount = selector.minAmount;
+    this.maxAmount = selector.maxAmount;
+    this.category = selector.category || '';
+  }
 
   constructor(private platform: Platform,
     private modalCtrl: ModalController,
@@ -46,7 +78,7 @@ export class HistoryPage {
     this.events.subscribe('refreshHistoryTab', () => {
       this.reset();
     });
-    this.transactionService.retrieve(this.limit, this.skip)
+    this.transactionService.retrieve(this.limit, this.skip, this.selector, this.sort)
       .then((transactions) => {
         this.transactions.push.apply(this.transactions, transactions);
         this.skip = this.transactions.length;
@@ -73,14 +105,10 @@ export class HistoryPage {
   }
   
   reset() {
-    this.startDate = undefined;
-    this.endDate = undefined;
-    this.minAmount = undefined;
-    this.maxAmount = undefined;
-    this.category = '';
-    this.sort = 'date';
+    this.selector = {};
+    this.sort = [{ date: 'desc' }];
     this.skip = 0;
-    this.transactionService.retrieve(this.limit, this.skip)
+    this.transactionService.retrieve(this.limit, this.skip, this.selector, this.sort)
       .then(transactions => {
         this.transactions = []; // Clear stale
         this.transactions.push.apply(this.transactions, transactions);
@@ -96,13 +124,7 @@ export class HistoryPage {
     });
     loading.present();
     this.skip = 0;
-    this.transactionService.retrieve(this.limit, this.skip, {
-      startDate: this.startDate,
-      endDate: this.endDate,
-      minAmount: this.minAmount,
-      maxAmount: this.maxAmount,
-      category: this.category
-    })
+    this.transactionService.retrieve(this.limit, this.skip, this.selector, this.sort)
       .then(transactions => {
         loading.dismiss();
         this.toggleToolbar();
@@ -122,14 +144,10 @@ export class HistoryPage {
     });
     loading.present();
     // Reset default filter
-    this.startDate = undefined;
-    this.endDate = undefined;
-    this.minAmount = undefined;
-    this.maxAmount = undefined;
-    this.category = '';
-    this.sort = 'date';
+    this.selector = {};
+    this.sort = [{ date: 'desc' }];
     this.skip = 0;
-    this.transactionService.retrieve(this.limit, this.skip)
+    this.transactionService.retrieve(this.limit, this.skip, this.selector, this.sort)
       .then(transactions => {
         loading.dismiss();
         this.toggleToolbar();
@@ -185,7 +203,7 @@ export class HistoryPage {
     this.cronService.runJobForAllCrons(job).then((bulk) =>{
       // Retrieve all transactions
       this.skip = 0;
-      this.transactionService.retrieve(this.limit, this.skip)
+      this.transactionService.retrieve(this.limit, this.skip, this.selector, this.sort)
         .then(transactions => {
           this.transactions = []; // Clear stale
           this.transactions.push.apply(this.transactions, transactions);
@@ -203,13 +221,7 @@ export class HistoryPage {
     if (this.searchTerm && this.searchTerm.trim() !== '') {
       infiniteScroll.complete();
     } else {
-      this.transactionService.retrieve(this.limit, this.skip, {
-        startDate: this.startDate,
-        endDate: this.endDate,
-        minAmount: this.minAmount,
-        maxAmount: this.maxAmount,
-        category: this.category
-      })
+      this.transactionService.retrieve(this.limit, this.skip, this.selector, this.sort)
         .then(transactions => {
           this.transactions.push.apply(this.transactions, transactions);
           this.skip = this.transactions.length;
@@ -227,7 +239,7 @@ export class HistoryPage {
       });
     } else {
       this.skip = 0;
-      this.transactionService.retrieve(this.limit, this.skip)
+      this.transactionService.retrieve(this.limit, this.skip, this.selector, this.sort)
         .then(transactions => {
           this.transactions = [];
           this.transactions.push.apply(this.transactions, transactions);

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Storage } from '@ionic/storage';
 import { UUID } from 'angular2-uuid';
 import * as PouchDB from 'pouchdb';
 import * as FindPlugin from 'pouchdb-find';
@@ -12,17 +13,38 @@ PouchDB.plugin(FindPlugin);
 */
 @Injectable()
 export class DataService {
-  protected _dbName: string = 'Cashflow';
-  protected _dbOpts = { adapter: 'websql' };
+  protected _storage;
+  protected _dbName;
+  protected _dbOpts = { adapter: 'websql', auto_compaction: true };
   protected _db;
   protected _collection = '';
 
   constructor() {
-    this.init();
+    this._storage = new Storage(['sqlite', 'websql', 'indexeddb'], { name: '_cashflow_Config' });
+    this._storage.ready().then(() => {
+      this.init();
+    });
+    PouchDB.on('destroyed', (dbName) => {
+      if (this._dbName === dbName) {
+        this.init();
+      }
+    });
   }
   
   init() {
-    this._db = new PouchDB(this._dbName, this._dbOpts);
+    return this._storage.get('_dbName').then((dbName) => {
+      this._dbName = dbName || 'Cashflow';
+      this._db = new PouchDB(this._dbName, this._dbOpts);
+      return this._storage.set('_dbName', this._dbName);
+    });
+  }
+  
+  reset() {
+    return this._storage.set('_dbName', `Cashflow_${Date.now()}`).then(() => {
+      return this._db.viewCleanup().then(() => {
+        return this._db.destroy();
+      });
+    });
   }
   
   retrieve(limit?, skip?) {

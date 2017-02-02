@@ -10,14 +10,21 @@
 <ion-content padding>
   <ion-item-group>
     <ion-item-divider color="light">
-      云同步
+      数据库管理
       <ion-icon item-right name="cloud-outline"></ion-icon>
     </ion-item-divider>
+    <ion-item>
+      删除所有本地相关数据库，包括数据检索信息
+      <button ion-button item-right icon-left (click)="resetDatabase()">
+        <ion-icon name="trash"></ion-icon>
+          重置
+      </button>
+    </ion-item>
     <ion-item>
       与远程数据库或者云端数据同步互相之间数据
       <button ion-button item-right icon-left>
         <ion-icon name="sync"></ion-icon>
-        数据库同步
+        云同步
       </button>
     </ion-item>
   </ion-item-group>

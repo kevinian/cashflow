@@ -2,6 +2,7 @@ import { Component, ViewChild } from '@angular/core';
 import { ModalController, Content, NavParams } from 'ionic-angular';
 import * as _ from 'lodash';
 import * as moment from 'moment';
+moment.locale('zh-cn');
 
 import { DetailPage } from '../detail/detail';
 import { TransactionService } from '../../providers/transaction-service';
